@@ -1,0 +1,9 @@
+HERO IMAGE SLOT
+
+This placeholder file is not the image itself. The page currently loads:
+assets/hero-background.svg
+
+Easy option: add your own photo here as assets/hero.jpg, then edit styles.css:
+change url('assets/hero-background.svg') to url('assets/hero.jpg') in the .hero background declaration.
+
+Keep the linear-gradient layer before the url(...) so the dark overlay remains on top of your photo.
