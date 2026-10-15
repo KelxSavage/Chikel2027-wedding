@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi + Kel | Save the Date</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --blue: #9DB7CC;
+    --blue-deep: #6F8FA8;
+    --blue-dark: #526D83;
+    --ivory: #FFFDF8;
+    --cream: #F8F4EA;
+    --champagne: #C8A96B;
+    --text: #526D83;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--cream);
+    color: var(--text);
+    font-family: "Montserrat", sans-serif;
+}
+
+section {
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ============================================================
+   ENVELOPE INTRO
+   ============================================================ */
+
+.envelope-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--ivory);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: opacity 1s ease, visibility 1s ease;
+}
+
+.envelope-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.envelope-wrapper {
+    position: relative;
+    width: min(82vw, 520px);
+    text-align: center;
+}
+
+.envelope-title {
+    font-family: "Bodoni Moda", serif;
+    font-size: clamp(24px, 4vw, 40px);
+    font-weight: 400;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--blue-dark);
+    margin-bottom: 42px;
+}
+
+.envelope {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.55 / 1;
+    cursor: pointer;
+    perspective: 1000px;
+    filter: drop-shadow(0 20px 35px rgba(50, 70, 80, .18));
+}
+
+.envelope-body {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,.20), transparent 35%),
+        linear-gradient(135deg, #AEC4D5, var(--blue) 55%, #91AEC3);
+    overflow: hidden;
+}
+
+.envelope-body::before,
+.envelope-body::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    z-index: 2;
+}
+
+.envelope-body::before {
+    left: 0;
+    border-width: 0 0 100% 100%;
+    border-color: transparent transparent rgba(255,255,255,.12) transparent;
+}
+
+.envelope-body::after {
+    right: 0;
+    border-width: 100% 0 0 100%;
+    border-color: transparent transparent transparent rgba(50,75,90,.10);
+}
+
+.envelope-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 62%;
+    background: linear-gradient(145deg, #B8CBD9 0%, #9DB7CC 52%, #8CA9BE 100%);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    z-index: 5;
+    transition: transform .42s cubic-bezier(.77,0,.18,1);
+}
+
+.envelope-card {
+    position: absolute;
+    left: 10%;
+    width: 80%;
+    height: 82%;
+    bottom: 5%;
+    background: var(--ivory);
+    z-index: 3;
+    transition: none;
+}
+
+.wax-seal {
+    position: absolute;
+    z-index: 20;
+    left: 50%;
+    top: 54%;
+    width: 118px;
+    height: 118px;
+    transform: translate(-50%, -50%);
+    border-radius: 49% 51% 47% 53% / 52% 46% 54% 48%;
+    background:
+        radial-gradient(circle at 34% 25%,
+            #F5DCA2 0%,
+            #E3C47D 20%,
+            #C9A65F 49%,
+            #AE8749 76%,
+            #967139 100%);
+    box-shadow:
+        0 9px 14px rgba(58,65,68,.24),
+        inset 3px 3px 7px rgba(255,255,255,.58),
+        inset -7px -8px 12px rgba(91,64,25,.30),
+        0 0 0 1px rgba(118,87,39,.24);
+    transition: transform .7s ease, opacity .5s ease;
+}
+
+.seal-rim {
+    position: absolute;
+    inset: 9px;
+    border: 1px solid rgba(255,245,211,.82);
+    border-radius: 48% 52% 50% 50%;
+    box-shadow:
+        inset 0 0 0 1px rgba(121,87,36,.30),
+        0 0 0 1px rgba(255,239,193,.18);
+}
+
+.seal-rim::before,
+.seal-rim::after {
+    content: "✦";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,244,207,.86);
+    font-size: 8px;
+}
+
+.seal-rim::before { left: 9px; }
+.seal-rim::after { right: 9px; }
+
+.seal-monogram {
+    position: absolute;
+    inset: 18px 12px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #FFF3CC;
+    font-family: "Bodoni Moda", serif;
+    text-shadow:
+        0 1px 1px rgba(91,63,24,.62),
+        1px 1px 0 rgba(255,255,255,.32);
+}
+
+.initial {
+    position: relative;
+    font-size: 44px;
+    line-height: 1;
+    font-weight: 400;
+}
+
+.seal-ornament {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,244,207,.88);
+    text-shadow: 0 1px 1px rgba(91,63,24,.45);
+    z-index: 3;
+}
+
+.seal-ornament.top {
+    top: 14px;
+    font-size: 9px;
+}
+
+.seal-ornament.bottom {
+    bottom: 11px;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    transform: translateX(-50%) rotate(180deg);
+}
+
+.envelope-screen.opening .envelope-flap {
+    transform: rotateX(180deg);
+}
+
+.envelope-screen.opening .envelope-card {
+    transform: none;
+}
+
+.envelope-screen.opening .envelope {
+    animation: envelopeZoomReveal .58s cubic-bezier(.72,0,.16,1) .42s forwards;
+    transform-origin: center center;
+}
+
+.envelope-screen.opening .envelope-title {
+    opacity: 0;
+    transition: opacity .25s ease;
+}
+
+.envelope-screen.opening .wax-seal {
+    animation: sealZoomReveal .58s cubic-bezier(.72,0,.16,1) .42s forwards;
+}
+
+@keyframes envelopeZoomReveal {
+    0% { transform: scale(1); }
+    100% { transform: scale(5.2); }
+}
+
+@keyframes sealZoomReveal {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(5.2); opacity: 0; }
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.hero {
+    background:
+        linear-gradient(rgba(40,55,65,.20), rgba(40,55,65,.35)),
+        url("CK27_NB.png");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+}
+
+.names {
+    font-family: "Bodoni Moda", serif;
+    font-size: clamp(22px, 3vw, 42px);
+    font-weight: 400;
+    letter-spacing: .25em;
+    line-height: 1;
+    text-transform: uppercase;
+    text-shadow: 0 10px 12px rgba(0,0,0,.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .38em;
+    position: relative;
+    /* Place CHI + KEL in the lower portion of the first hero section. */
+    transform: translateY(40vh);
+}
+
+.names span {
+    display: inline-block;
+}
+
+.names .amp {
+    font-size: .65em;
+    letter-spacing: .05em;
+}
+
+.names::after {
+    content: "";
+    position: absolute;
+    width: clamp(90px, 12vw, 170px);
+    height: 1px;
+    background: rgba(255,255,255,.9);
+    margin-top: 90px;
+}
+
+/* ============================================================
+   DETAILS
+   ============================================================ */
+
+.details {
+    background: var(--ivory);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 70px 25px;
+}
+
+.details-inner {
+    width: min(100%, 900px);
+}
+
+.kicker {
+    font-size: 10px;
+    letter-spacing: .4em;
+    text-transform: uppercase;
+    color: var(--blue-deep);
+    margin-bottom: 28px;
+}
+
+.details h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(55px, 9vw, 110px);
+    font-weight: 300;
+    line-height: .85;
+    margin-bottom: 45px;
+}
+
+.info {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 65px;
+}
+
+.info-item {
+    min-width: 150px;
+}
+
+.info-label {
+    font-size: 9px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--blue-deep);
+    margin-bottom: 12px;
+}
+
+.info-value {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(24px, 3.5vw, 38px);
+}
+
+.countdown-title {
+    font-size: 10px;
+    letter-spacing: .35em;
+    text-transform: uppercase;
+    color: var(--blue-deep);
+    margin-bottom: 25px;
+}
+
+.countdown {
+    display: flex;
+    justify-content: center;
+    gap: clamp(20px, 5vw, 65px);
+}
+
+.number {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(42px, 7vw, 78px);
+    font-weight: 300;
+    line-height: .9;
+}
+
+.label {
+    margin-top: 9px;
+    font-size: 8px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    opacity: .65;
+}
+
+/* ============================================================
+   FINAL
+   ============================================================ */
+
+.final {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--blue);
+    color: white;
+}
+
+.final-photo {
+    background: url("CK27_court.jpg") center/cover no-repeat;
+    min-height: 100vh;
+}
+
+.final-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 70px;
+}
+
+.final-copy-inner {
+    max-width: 520px;
+}
+
+.final-copy h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(55px, 7vw, 95px);
+    font-weight: 300;
+    line-height: .88;
+}
+
+.final-copy .formal {
+    margin-top: 35px;
+    font-size: 10px;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: #FFF1C8;
+    line-height: 1.8;
+}
+
+@media (max-width: 700px) {
+    .envelope-wrapper {
+        width: min(90vw, 430px);
+    }
+
+    .envelope-title {
+        margin-bottom: 28px;
+    }
+
+    .wax-seal {
+        width: 88px;
+        height: 88px;
+    }
+
+    .seal-monogram {
+        inset: 15px 9px 17px;
+        gap: 7px;
+    }
+
+    .initial {
+        font-size: 32px;
+    }
+
+    .seal-ornament.top {
+        top: 10px;
+        font-size: 7px;
+    }
+
+    .seal-ornament.bottom {
+        bottom: 8px;
+        font-size: 13px;
+    }
+
+    .info {
+        flex-direction: column;
+        gap: 28px;
+        margin-bottom: 50px;
+    }
+
+    .final {
+        grid-template-columns: 1fr;
+    }
+
+    .final-photo {
+        min-height: 55vh;
+    }
+
+    .final-copy {
+        min-height: 45vh;
+        padding: 45px 30px;
+    }
+}
+
+/* ============================================================
+   MUSIC CONTROL
+   ============================================================ */
+
+.music-control {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1000;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 11px;
+    border: 1px solid rgba(255,253,248,.72);
+    border-radius: 999px;
+    background: rgba(82,109,131,.68);
+    color: #FFFDF8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: "Montserrat", sans-serif;
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+    box-shadow: 0 7px 20px rgba(50,70,80,.16);
+    transition: transform .25s ease, opacity .35s ease, background .25s ease, padding .35s ease, min-width .35s ease;
+}
+
+.music-control:hover { transform: translateY(-1px); }
+.music-control.playing { background: rgba(200,169,107,.88); }
+.music-control .music-icon {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 0;
+}
+.music-control .music-label {
+    max-width: 42px;
+    opacity: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width .55s ease, opacity .45s ease;
+}
+.music-control.compact {
+    min-width: 36px;
+    padding: 0 9px;
+    gap: 0;
+}
+.music-control.compact .music-label {
+    max-width: 0;
+    opacity: 0;
+}
+
+@media (max-width: 700px) {
+    .music-control { right: 16px; bottom: 16px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================
+     ENVELOPE INTRO DISABLED
+     ============================================================
+     Kept in source so it can be re-enabled later.
+     <!--
+
+<div class="envelope-screen" id="envelopeScreen">
+    <div class="envelope-wrapper">
+
+        <div class="envelope-title">Save the Date</div>
+
+        <div class="envelope" id="envelope" aria-label="Open Save the Date">
+
+            <div class="envelope-card"></div>
+
+            <div class="envelope-body"></div>
+
+            <div class="envelope-flap"></div>
+
+            <div class="wax-seal" aria-label="C and K wax seal">
+                <div class="seal-rim"></div>
+                <div class="seal-ornament top">✦</div>
+
+                <div class="seal-monogram">
+                    <span class="initial c">C</span>
+                    <span class="initial k">K</span>
+                </div>
+
+                <div class="seal-ornament bottom">❧</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+-->
+
+<!-- ============================================================
+     BACKGROUND MUSIC
+     ============================================================ -->
+
+<button class="music-control" id="musicControl" type="button" title="Play music" aria-label="Play background music">
+    <span class="music-label" id="musicLabel">Music</span>
+    <span class="music-icon" id="musicIcon">♪</span>
+</button>
+
+<audio id="music1" preload="auto">
+    <source src="music1.mp3" type="audio/mpeg">
+</audio>
+<audio id="music2" preload="auto">
+    <source src="music2.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ============================================================
+     PAGE 1: HERO
+     ============================================================ -->
+
+<section class="hero">
+    <div class="names">
+        <span>CHI</span>
+        <span class="amp">+</span>
+        <span>KEL</span>
+    </div>
+</section>
+
+<!-- ============================================================
+     PAGE 2: DETAILS + COUNTDOWN
+     ============================================================ -->
+
+<section class="details">
+    <div class="details-inner">
+
+        <div class="kicker">Save the Date</div>
+
+        <h1>May 29, 2027</h1>
+
+        <div class="info">
+            <div class="info-item">
+                <div class="info-label">Location</div>
+                <div class="info-value">Montgomery, Texas</div>
+            </div>
+        </div>
+
+        <div class="countdown-title">
+            Counting down to forever
+        </div>
+
+        <div class="countdown">
+            <div>
+                <div class="number" id="days">00</div>
+                <div class="label">Days</div>
+            </div>
+
+            <div>
+                <div class="number" id="hours">00</div>
+                <div class="label">Hours</div>
+            </div>
+
+            <div>
+                <div class="number" id="minutes">00</div>
+                <div class="label">Minutes</div>
+            </div>
+
+            <div>
+                <div class="number" id="seconds">00</div>
+                <div class="label">Seconds</div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ============================================================
+     PAGE 3: PHOTO + CLOSING
+     ============================================================ -->
+
+<section class="final">
+
+    <div class="final-photo"></div>
+
+    <div class="final-copy">
+        <div class="final-copy-inner">
+
+            <h2>
+                We can't wait<br>
+                to celebrate<br>
+                with you.
+            </h2>
+
+            <div class="formal">
+                Formal Invitation to Follow
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+<script>
+/* Envelope intro is intentionally disabled for now. Its source remains above for easy restoration. */
+
+const musicControl = document.getElementById("musicControl");
+const musicIcon = document.getElementById("musicIcon");
+const music1 = document.getElementById("music1");
+const music2 = document.getElementById("music2");
+const musicTracks = [music1, music2];
+// Pick a different starting instrumental at random on each page load/refresh.
+let activeMusic = musicTracks[Math.floor(Math.random() * musicTracks.length)];
+let musicStarted = false;
+
+function updateMusicButton(playing) {
+    musicStarted = playing;
+    musicControl.classList.toggle("playing", playing);
+    musicIcon.textContent = playing ? "♫" : "♪";
+    musicControl.title = playing ? "Pause background music" : "Play background music";
+    musicControl.setAttribute("aria-label", playing ? "Pause background music" : "Play background music");
+}
+
+function playBackgroundMusic() {
+    musicTracks.forEach(track => {
+        if (track !== activeMusic) track.pause();
+    });
+    activeMusic.volume = 0.01;
+    activeMusic.play().then(() => {
+        updateMusicButton(true);
+    }).catch(() => {
+        // Browsers may block audible autoplay. The music button remains available for a tap.
+        updateMusicButton(false);
+    });
+}
+
+musicControl.addEventListener("click", () => {
+    if (!musicStarted || activeMusic.paused) {
+        playBackgroundMusic();
+    } else {
+        activeMusic.pause();
+        updateMusicButton(false);
+    }
+});
+
+// Keep the control elegant: the word "Music" retreats after a few seconds.
+setTimeout(() => {
+    musicControl.classList.add("compact");
+}, 4500);
+
+// When the chosen track ends, switch to the other track and continue.
+musicTracks.forEach(track => {
+    track.addEventListener("ended", () => {
+        activeMusic = track === music1 ? music2 : music1;
+        playBackgroundMusic();
+    });
+});
+
+// Music starts only when the visitor taps the control. Refreshing randomly selects a starting track.
+
+const weddingDate = new Date("2027-05-29T16:00:00").getTime();
+
+function updateCountdown() {
+    const now = new Date().getTime();
+    const difference = weddingDate - now;
+    const ids = ["days", "hours", "minutes", "seconds"];
+
+    if (difference <= 0) {
+        ids.forEach(id => {
+            document.getElementById(id).innerText = "00";
+        });
+        return;
+    }
+
+    const values = [
+        Math.floor(difference / (1000 * 60 * 60 * 24)),
+        Math.floor((difference / (1000 * 60 * 60)) % 24),
+        Math.floor((difference / (1000 * 60)) % 60),
+        Math.floor((difference / 1000) % 60)
+    ];
+
+    ids.forEach((id, i) => {
+        document.getElementById(id).innerText = String(values[i]).padStart(2, "0");
+    });
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
