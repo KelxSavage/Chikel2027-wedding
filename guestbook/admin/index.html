@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Guestbook Admin</title>
+<style>
+  :root { --bg:#faf7fc; --card:#fff; --ink:#2b2433; --muted:#7a6f85; --accent:#7c4dbb; --ok:#2e8b57; --bad:#c0392b; --line:#e6dff0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; background:var(--card); border-bottom:1px solid var(--line); }
+  h1 { font-size:1.1rem; margin:0; }
+  main { max-width:900px; margin:0 auto; padding:20px 16px 60px; }
+  .hidden { display:none !important; }
+  .login { max-width:340px; margin:12vh auto; background:var(--card); padding:24px; border-radius:12px; border:1px solid var(--line); }
+  input { width:100%; padding:10px; margin:6px 0 12px; border:1px solid var(--line); border-radius:8px; font-size:1rem; }
+  button { cursor:pointer; border:0; border-radius:8px; padding:9px 14px; font-size:.9rem; background:var(--accent); color:#fff; }
+  button.ghost { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  button.ok { background:var(--ok); } button.bad { background:var(--bad); }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .tabs button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .entry { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .meta { color:var(--muted); font-size:.8rem; margin-bottom:6px; }
+  .name { font-weight:600; }
+  .msg { white-space:pre-wrap; margin:8px 0 12px; }
+  .entry img { max-width:100%; max-height:320px; border-radius:8px; display:block; margin-bottom:10px; }
+  .entry audio { width:100%; margin-bottom:10px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .badge { font-size:.7rem; padding:2px 8px; border-radius:99px; background:var(--line); margin-left:8px; }
+  #err, #lerr { color:var(--bad); font-size:.9rem; min-height:1.2em; }
+  .empty { color:var(--muted); text-align:center; padding:40px 0; }
+  .overview { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:20px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .tile.warn { border-color:var(--bad); }
+  .tile .tv { font-size:1.3rem; font-weight:600; }
+  .tile.warn .tv { color:var(--bad); }
+  .tile .tl { font-size:.75rem; color:var(--muted); margin-top:2px; }
+</style>
+</head>
+<body>
+
+<section id="loginView" class="login">
+  <h1>Guestbook Admin</h1>
+  <p class="meta">Authorized users only.</p>
+  <form id="loginForm">
+    <label>Email<input id="email" type="email" autocomplete="username" required></label>
+    <label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit" style="width:100%">Sign in</button>
+    <p id="lerr"></p>
+  </form>
+</section>
+
+<div id="appView" class="hidden">
+  <header>
+    <h1>Chi &amp; Kel Guestbook — Admin</h1>
+    <div><span id="who" class="meta"></span> <button class="ghost" id="logout">Sign out</button></div>
+  </header>
+  <main>
+    <div class="overview" id="overview"></div>
+    <div class="tabs" id="tabs"></div>
+    <p id="err"></p>
+    <div id="list"></div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== CONFIG: edit these =====
+const SUPABASE_URL  = 'https://noqtkcdvmafbizrveqva.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_dZvjAIHgaWSd7lTPQOqXHw_JMZoz9CO';   // Dashboard > Project Settings > API (anon/public key; safe in browser, RLS protects data)
+const TABLE  = 'guestbook_entries';
+const BUCKETS = { photo: 'guestbook-photos', audio: 'guestbook-audio' };
+// column names
+const COL = { id:'id', name:'guest_name', message:'message', status:'status',
+              photo:'photo_path', audio:'audio_path', created:'created_at' };
+// ==============================
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+const STATUSES = ['pending','approved','rejected'];
+let current = 'pending';
+
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  Object.assign(n, props);
+  kids.forEach(k => n.append(k));
+  return n;
+}
+
+async function checkAdmin() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return show(false);
+  const { data, error } = await sb.rpc('is_admin');
+  if (error || data !== true) {
+    await sb.auth.signOut();
+    $('lerr').textContent = 'This account does not have admin access.';
+    return show(false);
+  }
+  $('who').textContent = session.user.email;
+  show(true);
+  buildTabs();
+  loadOverview();
+  load();
+}
+
+function show(isApp) {
+  $('loginView').classList.toggle('hidden', isApp);
+  $('appView').classList.toggle('hidden', !isApp);
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('lerr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({
+    email: $('email').value.trim(), password: $('password').value });
+  if (error) { $('lerr').textContent = 'Sign-in failed.'; return; }
+  $('password').value = '';
+  checkAdmin();
+});
+
+$('logout').addEventListener('click', async () => { await sb.auth.signOut(); show(false); });
+
+function buildTabs() {
+  const t = $('tabs'); t.replaceChildren();
+  STATUSES.forEach(s => {
+    const b = el('button', { textContent: s[0].toUpperCase() + s.slice(1) });
+    if (s === current) b.classList.add('active');
+    b.onclick = () => { current = s; buildTabs(); load(); };
+    t.append(b);
+  });
+}
+
+async function signed(path, bucket) {
+  if (!path) return null;
+  const { data } = await sb.storage.from(bucket).createSignedUrl(path, 3600);
+  return data ? data.signedUrl : null;
+}
+
+async function loadOverview() {
+  const box = $('overview'); box.replaceChildren();
+  const { data, error } = await sb.rpc('admin_overview');
+  if (error) { box.append(el('p', { className:'meta', textContent:'Overview unavailable: ' + error.message })); return; }
+  const sc = data.status_counts || {};
+  const tile = (label, value, warn) => el('div', { className:'tile' + (warn ? ' warn' : '') },
+    el('div', { className:'tv', textContent: String(value) }), el('div', { className:'tl', textContent: label }));
+  const total = Object.values(sc).reduce((a, b) => a + Number(b), 0);
+  box.append(tile('Total entries', total), tile('Pending', sc.pending || 0, (sc.pending || 0) > 0),
+             tile('Approved', sc.approved || 0), tile('Rejected', sc.rejected || 0),
+             tile('Database MB', data.db_size_mb));
+  for (const b of data.buckets || []) {
+    const limit = b.file_size_limit ? (b.file_size_limit / 1048576).toFixed(0) + ' MB limit' : 'no limit set';
+    box.append(tile(`${b.bucket}: ${b.file_count} files, largest ${b.largest_mb} MB (${limit})`, b.total_mb + ' MB'));
+    box.append(tile(`${b.bucket} privacy`, b.public ? 'PUBLIC' : 'Private', b.public));
+  }
+  box.append(tile('RLS on guestbook_entries', data.rls_guestbook_entries ? 'On' : 'OFF', !data.rls_guestbook_entries));
+}
+
+async function load() {
+  $('err').textContent = '';
+  const list = $('list'); list.replaceChildren(el('p', { className:'empty', textContent:'Loading…' }));
+  const { data, error } = await sb.from(TABLE).select('*')
+    .eq(COL.status, current).order(COL.created, { ascending:false });
+  if (error) { $('err').textContent = 'Could not load entries: ' + error.message; list.replaceChildren(); return; }
+  if (!data.length) { list.replaceChildren(el('p', { className:'empty', textContent:`No ${current} entries.` })); return; }
+  list.replaceChildren();
+  for (const row of data) list.append(await card(row));
+}
+
+async function card(row) {
+  const c = el('div', { className:'entry' });
+  const when = row[COL.created] ? new Date(row[COL.created]).toLocaleString() : '';
+  c.append(el('div', { className:'meta' }, when));
+  c.append(el('div', { className:'name' }, row[COL.name] || 'Anonymous',
+              el('span', { className:'badge', textContent: row[COL.status] })));
+  if (row[COL.message]) c.append(el('div', { className:'msg', textContent: row[COL.message] }));
+
+  const p = await signed(row[COL.photo], BUCKETS.photo);
+  if (p) c.append(el('img', { src:p, alt:'Guest photo', loading:'lazy' }));
+  const a = await signed(row[COL.audio], BUCKETS.audio);
+  if (a) c.append(el('audio', { src:a, controls:true, preload:'none' }));
+
+  const acts = el('div', { className:'actions' });
+  if (row[COL.status] !== 'approved') acts.append(btn('Approve', 'ok', () => setStatus(row, 'approved')));
+  if (row[COL.status] !== 'rejected') acts.append(btn('Reject', 'ghost', () => setStatus(row, 'rejected')));
+  if (row[COL.status] !== 'pending')  acts.append(btn('Back to pending', 'ghost', () => setStatus(row, 'pending')));
+  acts.append(btn('Delete', 'bad', () => remove(row)));
+  c.append(acts);
+  return c;
+}
+
+function btn(label, cls, fn) { return el('button', { textContent:label, className:cls, onclick:fn }); }
+
+async function setStatus(row, status) {
+  const { error } = await sb.from(TABLE).update({ [COL.status]: status }).eq(COL.id, row[COL.id]);
+  if (error) { $('err').textContent = error.message; return; }
+  load(); loadOverview();
+}
+
+async function remove(row) {
+  if (!confirm('Permanently delete this entry and its uploads?')) return;
+  if (row[COL.photo]) await sb.storage.from(BUCKETS.photo).remove([row[COL.photo]]);
+  if (row[COL.audio]) await sb.storage.from(BUCKETS.audio).remove([row[COL.audio]]);
+  const { error } = await sb.from(TABLE).delete().eq(COL.id, row[COL.id]);
+  if (error) { $('err').textContent = error.message; return; }
+  load(); loadOverview();
+}
+
+sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_OUT') show(false); });
+checkAdmin();
+</script>
+</body>
+</html>
