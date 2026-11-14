@@ -622,3 +622,40 @@ button { font: inherit; }
 .story p, .gallery-copy p, .registry p, .faq-item p, .form-help { color: #806B7C; }
 .event-detail, .event-row details, .weekend-copy p, .contact p { color: #E5D2B6; }
 .section-kicker, .event-icon, .event-time, .footer-brand em, .brand-divider { color: #D4AF7C; }
+
+/* Clickable wedding guestbook card */
+.guest-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.guest-card-link:hover {
+  transform: translateY(-5px);
+}
+
+.guest-card-link:focus-visible {
+  outline: 2px solid #8a7958;
+  outline-offset: 6px;
+}
+
+.guestbook-prompt {
+  display: inline-block;
+  margin-top: 22px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8a7958;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.guest-card-link:hover .guestbook-prompt,
+.guest-card-link:focus-visible .guestbook-prompt {
+  opacity: 1;
+  transform: translateY(0);
+}
