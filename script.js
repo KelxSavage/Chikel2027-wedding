@@ -181,10 +181,3 @@ if (track) {
   updateCarouselCount();
   startAutoplay();
 }
-
-// Registry placeholder
-const registryLink = document.getElementById('registry-link');
-registryLink?.addEventListener('click', (event) => {
-  event.preventDefault();
-  alert('Registry details will be added here soon.');
-});
